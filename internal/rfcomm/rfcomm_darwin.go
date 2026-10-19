@@ -1,5 +1,5 @@
-// Package rfcomm wraps IOBluetooth. Every call must happen on the main OS
-// thread, because channel callbacks are delivered on the opener's run loop.
+// IOBluetooth backend.
+
 package rfcomm
 
 /*
@@ -11,14 +11,16 @@ package rfcomm
 import "C"
 
 import (
-	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"time"
 	"unsafe"
 )
 
-var ErrNotFound = errors.New("no paired device found")
+// IOBluetooth delivers channel callbacks on the run loop of the thread that
+// opened the channel, so every call must stay on the main OS thread.
+func init() { runtime.LockOSThread() }
 
 func check(op string, r C.int) error {
 	if r != 0 {

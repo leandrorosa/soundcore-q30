@@ -1,0 +1,42 @@
+version: 2
+project_name: q30
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+    - sh -c 'mkdir -p completions && go run . completion bash > completions/q30.bash && go run . completion zsh > completions/_q30 && go run . completion fish > completions/q30.fish'
+
+# The macOS backend links IOBluetooth through cgo, so releases must run on macOS.
+builds:
+  - id: darwin
+    binary: q30
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    env: [CGO_ENABLED=1]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+  - id: linux
+    binary: q30
+    goos: [linux]
+    goarch: [amd64, arm64]
+    env: [CGO_ENABLED=0]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+
+universal_binaries:
+  - ids: [darwin]
+    replace: true
+
+archives:
+  - formats: [tar.gz]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ if eq .Arch "all" }}universal{{ else }}{{ .Arch }}{{ end }}'
+    files:
+      - README.md
+      - completions/*
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
